@@ -4,6 +4,8 @@ import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.framework.recipes.cache.TreeCache;
 import org.apache.curator.retry.RetryOneTime;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.env.EnvironmentPostProcessor;
 import org.springframework.core.env.ConfigurableEnvironment;
@@ -18,6 +20,8 @@ import java.util.Map;
  */
 @Slf4j
 public class ZookeeperEnvironmentPostProcessor implements EnvironmentPostProcessor {
+
+    private static final Logger logger = LoggerFactory.getLogger(ZookeeperEnvironmentPostProcessor.class);
 
     @Override
     public void postProcessEnvironment(ConfigurableEnvironment environment, SpringApplication application){
@@ -52,9 +56,9 @@ public class ZookeeperEnvironmentPostProcessor implements EnvironmentPostProcess
         treeCache.getListenable().addListener((curatorFramework, treeCacheEvent) -> {
             switch (treeCacheEvent.getType()){
                 case NODE_UPDATED:
-                    System.out.println("收到了数据变化的通知"+treeCacheEvent.getData());
+                    logger.info("收到了数据变化的通知"+treeCacheEvent.getData());
                     String configName=treeCacheEvent.getData().getPath().replaceAll("/".concat(configNodeName).concat("/"), "");
-                    String newValue=new String(treeCacheEvent.getData().getData());
+                    Object newValue=new String(treeCacheEvent.getData().getData());
                     /*spring已经创建对象，改变@value注入的值*/
                     /*反射*/
                     SpringValueProcessor.cacheMap.get(configName).update(newValue);
